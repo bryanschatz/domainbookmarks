@@ -48,3 +48,24 @@ header p {
   text-decoration: none;
   color: #0066cc;
 }
+
+/* breadcrumb link above each category page */
+.breadcrumb {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+/* tighter typography inside each card */
+.card h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.card p {
+  margin-bottom: 0;
+  color: #555;
+  font-size: 0.9rem;
+}
