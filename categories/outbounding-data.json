@@ -1,0 +1,55 @@
+{
+  "description": "Prospecting, research, email finding, verification, outreach, and tracking.",
+  "sections": {
+    "Prospecting": [
+      { "name": "Apollo", "url": "https://app.apollo.io/", "desc": "company and contact discovery with filters" },
+      { "name": "BuiltWith", "url": "https://builtwith.com/", "desc": "find sites by tech stack to match domain use cases" },
+      { "name": "Crunchbase", "url": "https://www.crunchbase.com/", "desc": "funding and company lists for prioritization" },
+      { "name": "LinkedIn Sales Navigator", "url": "https://www.linkedin.com/sales/", "desc": "people and account targeting" },
+      { "name": "Wappalyzer", "url": "https://www.wappalyzer.com/", "desc": "alternate to BuiltWith for stack intel" }
+    ],
+    "Research": [
+      { "name": "Clearbit", "url": "https://www.clearbit.com/", "desc": "firmographic enrichment to refine fit" },
+      { "name": "Google operators", "url": "https://search.google.com/search-console/about", "desc": "use site: and intitle: to find likely buyers" },
+      { "name": "Similarweb", "url": "https://www.similarweb.com/", "desc": "traffic and competitors for pitch context" },
+      { "name": "Google Trends", "url": "https://trends.google.com/", "desc": "interest signals to time outreach" }
+    ],
+    "Email finding": [
+      { "name": "Hunter", "url": "https://hunter.io/", "desc": "domain search and pattern guessing" },
+      { "name": "RocketReach", "url": "https://rocketreach.co/", "desc": "emails for executives and teams" },
+      { "name": "Snov", "url": "https://snov.io/", "desc": "finder plus basic outreach" },
+      { "name": "Voila Norbert", "url": "https://www.voilanorbert.com/", "desc": "simple finder with exports" }
+    ],
+    "Verification": [
+      { "name": "Mail-Tester", "url": "https://www.mail-tester.com/", "desc": "quick spam score check" },
+      { "name": "MXToolbox", "url": "https://mxtoolbox.com/", "desc": "DNS, SPF, DKIM, and blacklist checks" },
+      { "name": "NeverBounce", "url": "https://neverbounce.com/", "desc": "bulk email verification" },
+      { "name": "ZeroBounce", "url": "https://www.zerobounce.net/", "desc": "alternate bulk verifier" }
+    ],
+    "Cold outreach": [
+      { "name": "GMass", "url": "https://gmass.co/", "desc": "send from Gmail with mail merge" },
+      { "name": "Instantly", "url": "https://instantly.ai/", "desc": "multi-inbox warmup and campaigns" },
+      { "name": "Lemlist", "url": "https://lemlist.com/", "desc": "personalization and sequence tooling" },
+      { "name": "Mailshake", "url": "https://mailshake.com/", "desc": "proven cold email platform" },
+      { "name": "QuickMail", "url": "https://quickmail.com/", "desc": "deliverability focused sending" },
+      { "name": "Woodpecker", "url": "https://woodpecker.co/", "desc": "simple sequences and replies" }
+    ],
+    "CRM and tracking": [
+      { "name": "Airtable", "url": "https://airtable.com/", "desc": "light CRM with views and automations" },
+      { "name": "Notion", "url": "https://www.notion.so/", "desc": "notes and pipeline in one place" },
+      { "name": "Pipedrive", "url": "https://www.pipedrive.com/", "desc": "sales pipeline for domains" },
+      { "name": "Streak for Gmail", "url": "https://streak.com/", "desc": "CRM inside your inbox" },
+      { "name": "Zapier", "url": "https://zapier.com/", "desc": "automate leads, sends, and logging" },
+      { "name": "Make", "url": "https://www.make.com/", "desc": "alternate to Zapier for automations" }
+    ],
+    "Compliance": [
+      { "name": "CAN-SPAM overview", "url": "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business", "desc": "US rules for commercial email" },
+      { "name": "GDPR info", "url": "https://gdpr-info.eu/", "desc": "EU data and consent basics" }
+    ],
+    "Learning": [
+      { "name": "DomainSherpa", "url": "https://www.domainsherpa.com/", "desc": "interviews and sales strategy" },
+      { "name": "NamePros", "url": "https://www.namepros.com/forums/domain-discussion.2/", "desc": "outreach threads and scripts" },
+      { "name": "Indie Hackers", "url": "https://www.indiehackers.com/", "desc": "cold email tactics that cross over" }
+    ]
+  }
+}
