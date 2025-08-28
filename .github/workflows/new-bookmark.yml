@@ -1,0 +1,46 @@
+name: New Bookmark
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  build:
+    if: contains(github.event.issue.labels.*.name, 'bookmark')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+
+      - name: Process bookmark
+        id: process
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          python scripts/new_bookmark.py "$ISSUE_TITLE" "$ISSUE_BODY"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "feat: add bookmark ${{ steps.process.outputs.short_title }}"
+          title: "Add bookmark: ${{ steps.process.outputs.short_title }}"
+          body: "Automated PR from issue #${{ github.event.issue.number }}\n\nCategory: ${{ steps.process.outputs.category_name }}\nURL: ${{ steps.process.outputs.url }}"
+          branch: "auto/bookmark-${{ github.run_id }}"
+          labels: bookmark, automated
