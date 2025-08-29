@@ -13,7 +13,8 @@ DATA_DIR = ROOT / 'data'
 TEMPLATES_DIR = ROOT / 'templates'
 CATEGORY_TEMPLATE = TEMPLATES_DIR / 'category.html'
 
-CARD_START = '<!-- AUTO-CARDS:START -->'   # (not used in JSON mode)
+# (Markers kept for backward-compat; cards are JSON-driven now)
+CARD_START = '<!-- AUTO-CARDS:START -->'
 CARD_END   = '<!-- AUTO-CARDS:END -->'
 CAT_START  = '<!-- AUTO-CATEGORIES:START -->'
 CAT_END    = '<!-- AUTO-CATEGORIES:END -->'
@@ -22,10 +23,10 @@ session = requests.Session()
 session.headers.update({'User-Agent': 'DomainBookmarksBot/1.1'})
 
 # ---- Issue overrides
-CATEGORY_RE = re.compile(r'^Category:\s*(.+)$', re.I|re.M)
-GROUP_RE    = re.compile(r'^Group:\s*(.+)$', re.I|re.M)
-DESC_RE     = re.compile(r'^Description:\s*(.+)$', re.I|re.M)
-TITLE_RE    = re.compile(r'^Title:\s*(.+)$', re.I|re.M)
+CATEGORY_RE = re.compile(r'^Category:\s*(.+)$', re.I | re.M)
+GROUP_RE    = re.compile(r'^Group:\s*(.+)$', re.I | re.M)
+DESC_RE     = re.compile(r'^Description:\s*(.+)$', re.I | re.M)
+TITLE_RE    = re.compile(r'^Title:\s*(.+)$', re.I | re.M)
 
 def read_override(rx, text):
     m = rx.search(text or '')
@@ -39,7 +40,7 @@ def first_url(text):
 def fetch_meta(url):
     r = session.get(url, timeout=20)
     r.raise_for_status()
-    soup = BeautifulSoup(r.text, 'html.parser')
+    soup = BeautifulSoup(r.text, 'lxml')  # use lxml parser
     def pick(selectors):
         for sel in selectors:
             el = soup.select_one(sel)
@@ -47,7 +48,7 @@ def fetch_meta(url):
                 return el.get('content') or el.get_text(strip=True)
         return None
     title = pick(['meta[property="og:title"]', 'meta[name="twitter:title"]', 'title'])
-    desc = pick(['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]'])
+    desc  = pick(['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]'])
     return (title or url).strip(), (desc or '').strip(), r.url
 
 # ---- Fallback classification (no-API)
@@ -80,7 +81,7 @@ def ai_categorize(title, desc, url):
         "suggested_category_slug (kebab-case). \n\n"
         f"URL: {url}\nTITLE: {title}\nDESC: {desc}"
     )}
-    resp = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[sys_prompt,user], temperature=0.2)
+    resp = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[sys_prompt, user], temperature=0.2)
     txt = resp.choices[0].message["content"].strip()
     try:
         data = json.loads(txt)
@@ -103,7 +104,6 @@ def load_category_json(slug, category_name):
     path = DATA_DIR / f"{slug}.json"
     if path.exists():
         data = json.loads(path.read_text(encoding='utf-8'))
-        # normalize
         data.setdefault('category', category_name or data.get('category') or slug)
         data.setdefault('groups', [])
     else:
@@ -114,7 +114,7 @@ def upsert_item(data, group_name, item):
     # ensure group exists
     group_name = (group_name or 'General').strip()
     groups = data['groups']
-    g = next((g for g in groups if g['name'].lower()==group_name.lower()), None)
+    g = next((g for g in groups if g['name'].lower() == group_name.lower()), None)
     if not g:
         g = {'name': group_name, 'items': []}
         groups.append(g)
@@ -122,10 +122,10 @@ def upsert_item(data, group_name, item):
     items = g['items']
     existing = next((x for x in items if x['url'].rstrip('/') == item['url'].rstrip('/')), None)
     if existing:
-        existing.update({k:v for k,v in item.items() if v})
+        existing.update({k: v for k, v in item.items() if v})
     else:
         items.append(item)
-    # sort items and groups
+    # sort items and groups (alphabetical, case-insensitive)
     items.sort(key=lambda x: (x.get('title') or '').lower())
     groups.sort(key=lambda x: x['name'].lower())
 
@@ -141,30 +141,36 @@ def ensure_category_page(name, slug):
 
 def insert_between(mark_start, mark_end, whole, new_li, dedupe_line=None):
     start = whole.find(mark_start); end = whole.find(mark_end)
-    if start == -1 or end == -1 or end < start: raise RuntimeError('Missing AUTO markers')
+    if start == -1 or end == -1 or end < start:
+        raise RuntimeError('Missing AUTO markers')
     before = whole[:start+len(mark_start)]
     middle = whole[start+len(mark_start):end]
     after = whole[end:]
     lines = [l for l in middle.splitlines() if l.strip()]
-    if dedupe_line and dedupe_line.strip() in [l.strip() for l in lines]: return whole
-    if middle and not middle.endswith('\n'): middle += '\n'
+    if dedupe_line and dedupe_line.strip() in [l.strip() for l in lines]:
+        return whole
+    if middle and not middle.endswith('\n'):
+        middle += '\n'
     middle += new_li.rstrip() + '\n'
     return before + "\n" + middle + after
 
 def ensure_category_link_on_index(name, slug):
-    if not INDEX.exists(): return
+    if not INDEX.exists():
+        return
     html = INDEX.read_text(encoding='utf-8')
     link_li = f'<li><a href="categories/{slug}.html">{name}</a></li>'
     try:
-        # naive alphabetical insert: read existing <li>s, add, re-sort
+        # alphabetical insert inside markers
         start = html.find(CAT_START); end = html.find(CAT_END)
-        if start == -1 or end == -1 or end < start: raise RuntimeError('Missing AUTO markers')
-        before = html[:start+len(CAT_START)]; middle = html[start+len(CAT_START):end]; after = html[end:]
-        lis = re.findall(r'<li>.*?</li>', middle, flags=re.I|re.S)
+        if start == -1 or end == -1 or end < start:
+            raise RuntimeError('Missing AUTO markers')
+        before = html[:start+len(CAT_START)]
+        middle = html[start+len(CAT_START):end]
+        after = html[end:]
+        lis = re.findall(r'<li>.*?</li>', middle, flags=re.I | re.S)
         if not any(f'href="categories/{slug}.html"' in li for li in lis):
             lis.append(link_li)
-        # sort by link text
-        lis_sorted = sorted(lis, key=lambda li: re.sub(r'<.*?>','',li).strip().lower())
+        lis_sorted = sorted(lis, key=lambda li: re.sub(r'<.*?>', '', li).strip().lower())
         new_middle = "\n" + "\n".join(lis_sorted) + "\n"
         new_html = before + new_middle + after
     except RuntimeError:
@@ -179,7 +185,8 @@ if __name__ == '__main__':
 
     url = first_url(issue_title) or first_url(issue_body)
     if not url:
-        print('::error::No URL found in issue'); sys.exit(1)
+        print('::error::No URL found in issue')
+        sys.exit(1)
 
     title, meta_desc, final_url = fetch_meta(url)
 
@@ -189,7 +196,7 @@ if __name__ == '__main__':
         category_name = data_ai['category_name']
         category_slug = data_ai['suggested_category_slug']
         short_title   = data_ai['short_title']
-        description   = data_ai.get('description','')
+        description   = data_ai.get('description', '')
         group_name    = data_ai.get('group_name')
     else:
         category_name = fallback_category(title, meta_desc, final_url)
@@ -198,16 +205,20 @@ if __name__ == '__main__':
         description   = (meta_desc or f'Resource: {title}')[:220]
         group_name    = None
 
-    # issue-level overrides (free + explicit)
-    override_cat  = read_override(CATEGORY_RE, issue_body)
-    override_grp  = read_override(GROUP_RE, issue_body)
-    override_desc = read_override(DESC_RE, issue_body)
-    override_title= read_override(TITLE_RE, issue_body)
+    # issue-level overrides (explicit)
+    override_cat   = read_override(CATEGORY_RE, issue_body)
+    override_grp   = read_override(GROUP_RE,    issue_body)
+    override_desc  = read_override(DESC_RE,     issue_body)
+    override_title = read_override(TITLE_RE,    issue_body)
     if override_cat:
-        category_name = override_cat; category_slug = slugify(override_cat)
-    if override_grp: group_name = override_grp
-    if override_desc: description = override_desc[:220]
-    if override_title: short_title = override_title[:60]
+        category_name = override_cat
+        category_slug = slugify(override_cat)
+    if override_grp:
+        group_name = override_grp
+    if override_desc:
+        description = override_desc[:220]
+    if override_title:
+        short_title = override_title[:60]
 
     # ensure page and JSON
     ensure_category_page(category_name, category_slug)
@@ -220,11 +231,10 @@ if __name__ == '__main__':
     # homepage link
     ensure_category_link_on_index(category_name, category_slug)
 
-    # expose outputs for the workflow step (modern way)
-gh_out = os.environ.get("GITHUB_OUTPUT")
-if gh_out:
-    with open(gh_out, "a", encoding="utf-8") as f:
-        f.write(f"short_title={short_title}\n")
-        f.write(f"category_name={category_name}\n")
-        f.write(f"url={final_url}\n")
-
+    # Expose outputs for the workflow step (modern way)
+    gh_out = os.environ.get("GITHUB_OUTPUT")
+    if gh_out:
+        with open(gh_out, "a", encoding="utf-8") as f:
+            f.write(f"short_title={short_title}\n")
+            f.write(f"category_name={category_name}\n")
+            f.write(f"url={final_url}\n")
