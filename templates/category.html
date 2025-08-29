@@ -11,11 +11,12 @@
     <p><a href="../index.html">← Back to all categories</a></p>
     <h2>{{CATEGORY_NAME}}</h2>
 
-    <!-- AUTO-CARDS:START -->
-    <ul class="cards-grid">
-      <!-- cards go here -->
-    </ul>
-    <!-- AUTO-CARDS:END -->
+    <!-- JSON-driven groups + cards -->
+    <div id="category-root" data-json="../data/{{CATEGORY_SLUG}}.json">
+      <p>Loading…</p>
+    </div>
+
+    <script src="../assets/category-render.js" defer></script>
   </div>
 </body>
 </html>
