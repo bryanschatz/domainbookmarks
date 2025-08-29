@@ -220,7 +220,11 @@ if __name__ == '__main__':
     # homepage link
     ensure_category_link_on_index(category_name, category_slug)
 
-    # outputs for PR
-    print(f"::set-output name=short_title::{short_title}")
-    print(f"::set-output name=category_name::{category_name}")
-    print(f"::set-output name=url::{final_url}")
+    # expose outputs for the workflow step (modern way)
+gh_out = os.environ.get("GITHUB_OUTPUT")
+if gh_out:
+    with open(gh_out, "a", encoding="utf-8") as f:
+        f.write(f"short_title={short_title}\n")
+        f.write(f"category_name={category_name}\n")
+        f.write(f"url={final_url}\n")
+
